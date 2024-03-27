@@ -20,4 +20,4 @@ jobs:
         pip install awscli
     - name: upload version.json to s3
       run: |
-        aws s3 sync version.json s3://${{ secrets.AWS_S3_BUCKET }}/gitea/version.json --no-progress
+        aws s3 sync ./version.json s3://${{ secrets.AWS_S3_BUCKET }}/gitea/version.json --no-progress
