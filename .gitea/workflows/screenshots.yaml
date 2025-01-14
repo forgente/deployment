@@ -1,0 +1,44 @@
+name: update screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: 'Run mode. test: only upload to artificats, prod: upload to artificats and s3'
+        required: true
+        default: 'test'
+        options:
+          - test
+          - prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: install aws cli
+        run: |
+          apt update -y && apt install -y rsync python3 python3-pip
+          pip install awscli
+      - name: install dependencies
+        run: chmod +x .devcontainer/init.sh && .devcontainer/init.sh
+      - name: take screenshots
+        env:
+          BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
+          BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
+        run: python screenshots.py  
+      - name: upload screenshots to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+      - name: upload screenshots to s3
+        if: ${{ gitea.event.inputs.run_mode == 'prod' }}
+        run: aws s3 sync . s3://${{ secrets.AWS_S3_BUCKET }}/gitea/screenshots/test --exclude "*" --include "screenshots/*.png" --no-progress
+
