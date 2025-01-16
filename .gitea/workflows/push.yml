@@ -2,6 +2,9 @@ name: update deployment information
 
 on:
   push:
+    # only viersion.json changed
+    paths:
+      - version.json
 
 jobs:
   update-version:
