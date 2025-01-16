@@ -31,12 +31,12 @@ login_urls = {
     "repo_issue": "https://gitea.com/gitea/act_runner/issues/8",
 
     "repo_pull_requests": "https://gitea.com/gitea/act_runner/pulls",
-    "repo_pull_request": "https://gitea.com/gitea/act_runner/pulls/8",
-    "repo_pull_request_file":"https://gitea.com/gitea/act_runner/pulls/8/files",
-    "repo_pull_request_commits":"https://gitea.com/gitea/act_runner/pulls/8/commits",
+    "repo_pull_request": "https://gitea.com/gitea/act_runner/pulls/630",
+    "repo_pull_request_file":"https://gitea.com/gitea/act_runner/pulls/630/files",
+    "repo_pull_request_commits":"https://gitea.com/gitea/act_runner/pulls/630/commits",
 
     "repo_actions": "https://gitea.com/gitea/act_runner/actions",
-    "repo_actions_run": "https://gitea.com/gitea/act_runner/actions/runs/1",
+    "repo_actions_run": "https://gitea.com/gitea/act_runner/actions/runs/1000",
 
     "repo_releases": "https://gitea.com/gitea/act_runner/releases",
     "repo_tags": "https://gitea.com/gitea/act_runner/tags",
@@ -65,8 +65,9 @@ async def main():
     os.makedirs("screenshots", exist_ok=True)
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        browser = await p.webkit.launch()
         page = await browser.new_page(
+            color_scheme="dark",
             viewport={"width": 1920, "height": 1080}
         )
 
@@ -81,7 +82,7 @@ async def main():
         await page.fill("#user_name", username)
         await page.fill("#password", password)
         await page.get_by_role("button", name="Sign In").click()
-        await page.wait_for_load_state("networkidle")
+        await page.wait_for_load_state("domcontentloaded")
 
         for name, url in login_urls.items():
             await take_screenshot(page, name, url)
