@@ -7,9 +7,14 @@ on:
         description: 'Run mode. test: only upload to artificats, prod: upload to artificats and s3'
         required: true
         default: 'test'
+        type: choice
         options:
           - test
           - prod
+      target_path:
+        description: 'target upload path of s3. only used in prod mode'
+        default: 'screenshots/'
+        type: string
 
 jobs:
   build:
@@ -41,5 +46,5 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: upload screenshots to s3
         if: ${{ gitea.event.inputs.run_mode == 'prod' }}
-        run: aws s3 sync . s3://${{ secrets.AWS_S3_BUCKET }}/gitea/screenshots/test --exclude "*" --include "screenshots/*.png" --no-progress
+        run: aws s3 sync . s3://${{ secrets.AWS_S3_BUCKET }}/gitea/{{gitea.event.inputs.target_path}} --exclude "*" --include "screenshots/*.png" --no-progress
 
