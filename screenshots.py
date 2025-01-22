@@ -6,6 +6,7 @@ from playwright.async_api import async_playwright
 
 anonymous_urls = {
     "login": "https://gitea.com/user/login",
+    "register": "https://gitea.com/user/sign_up"
 }
 
 login_urls = {
