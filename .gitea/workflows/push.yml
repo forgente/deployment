@@ -20,7 +20,7 @@ jobs:
     - name: install aws cli
       run: |
         apt update -y && apt install -y rsync python3 python3-pip
-        pip install awscli
+        pip install awscli --break-system-packages
     - name: upload version.json to s3
       run: |
         aws s3 sync . s3://${{ secrets.AWS_S3_BUCKET }}/gitea --exclude "*" --include "version.json" --no-progress
