@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: install aws cli
         run: |
-          apt update -y && apt install -y rsync python3 python3-pip
-          pip install awscli
+          apt update -y && apt install -y rsync python3 pipx
+          pipx install awscli
       - name: install dependencies
         run: chmod +x .devcontainer/init.sh && .devcontainer/init.sh
       - name: take screenshots
