@@ -202,7 +202,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -232,7 +232,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -274,7 +274,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -315,7 +315,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -356,7 +356,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}-rootless
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -386,7 +386,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}-rootless
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -428,7 +428,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}-rootless
         env:
           USER_UID: 1000
           USER_GID: 1000
@@ -469,7 +469,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       gitea:
-        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        image: ${{ gitea.event.inputs.target_docker_repo }}:${{ gitea.event.inputs.target_version }}-rootless
         env:
           USER_UID: 1000
           USER_GID: 1000
