@@ -40,11 +40,6 @@ on:
         default: 'v1.50.0-noble'
         type: string
 
-test=-docker-steps: &test-docker-steps
-  - name: Test
-    run: |
-      pytest tests/test_install.py -v
-
 jobs:
   test-binary-sqlite3:
     runs-on: ubuntu-latest
