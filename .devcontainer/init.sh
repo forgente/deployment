@@ -12,4 +12,4 @@ sudo apt install ttf-mscorefonts-installer -y
 pip install -r requirements.txt --break-system-packages
 
 # playwright
-playwright install --with-deps webkit
+playwright install --with-deps chromium

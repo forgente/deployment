@@ -66,7 +66,7 @@ async def main():
     os.makedirs("screenshots", exist_ok=True)
 
     async with async_playwright() as p:
-        browser = await p.webkit.launch()
+        browser = await p.chromium.launch()
         page = await browser.new_page(
             color_scheme="dark",
             viewport={"width": 1920, "height": 1080}
