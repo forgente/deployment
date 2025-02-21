@@ -1,0 +1,512 @@
+name: test install
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_docker_repo:
+        description: 'target docker repo to test. example: gitea/gitea'
+        required: true
+        default: 'gitea/gitea'
+        type: string
+      target_version:
+        description: 'target version to test. example: 1.23.0'
+        required: true
+        type: string
+      target_platform:
+        description: 'target platform for binary test'
+        required: true
+        default: 'linux-amd64'
+        type: choice
+        options:
+          - linux-386
+          - linux-amd64
+          - linux-arm-5
+          - linux-arm-6
+          - linux-arm64
+      mysql_tag:
+        required: true
+        default: '8.4'
+        type: string
+      pgsql_tag:
+        required: true
+        default: '17.3'
+        type: string
+      mssql_tag:
+        required: true
+        default: '2022-latest'
+        type: string
+      playwright_tag:
+        required: true
+        default: 'v1.50.0-noble'
+        type: string
+
+test=-docker-steps: &test-docker-steps
+  - name: Test
+    run: |
+      pytest tests/test_install.py -v
+
+jobs:
+  test-binary-sqlite3:
+    runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: http://localhost:3000
+      DB_TYPE: sqlite3
+      DB_PATH: /data/gitea/gitea.db
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Download binary
+        run: |
+          wget https://dl.gitea.com/gitea/${{ gitea.event.inputs.target_version }}/gitea-${{ gitea.event.inputs.target_version }}-${{ gitea.event.inputs.target_platform }} -q -O gitea
+          chmod +x gitea
+      - name: Test
+        env:
+          GITEA_I_AM_BEING_UNSAFE_RUNNING_AS_ROOT: true
+        run: |
+          ./gitea web --port 3000 &
+          sleep 5
+          pytest tests/test_install.py -v
+
+  test-binary-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: bitnami/mysql:${{ gitea.event.inputs.mysql_tag }}
+        env:
+          ALLOW_EMPTY_PASSWORD: true
+          MYSQL_DATABASE: testgitea
+        ports:
+          - "3306:3306"
+        options: >-
+          --mount type=tmpfs,destination=/bitnami/mysql/data
+    env:
+      SERVER_HOST: http://localhost:3000
+      DB_TYPE: mysql
+      DB_HOST: localhost:3306
+      DB_USER: root
+      DB_PASSWD:
+      DB_NAME: testgitea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Download binary
+        run: |
+          wget https://dl.gitea.com/gitea/${{ gitea.event.inputs.target_version }}/gitea-${{ gitea.event.inputs.target_version }}-${{ gitea.event.inputs.target_platform }} -q -O gitea
+          chmod +x gitea
+      - name: Test
+        env:
+          GITEA_I_AM_BEING_UNSAFE_RUNNING_AS_ROOT: true
+        run: |
+          ./gitea web --port 3000 &
+          sleep 5
+          pytest tests/test_install.py -v
+  
+  test-binary-pgsql:
+    runs-on: ubuntu-latest
+    services:
+      pgsql:
+        image: postgres:${{ gitea.event.inputs.pgsql_tag }}
+        env:
+          POSTGRES_DB: testgitea
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - "5432:5432"
+    env:
+      SERVER_HOST: http://localhost:3000
+      DB_TYPE: postgres
+      DB_HOST: pgsql:5432
+      DB_USER: postgres
+      DB_PASSWD: postgres
+      DB_NAME: testgitea
+      DB_SCHEMA: gtestschema
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Download binary
+        run: |
+          wget https://dl.gitea.com/gitea/${{ gitea.event.inputs.target_version }}/gitea-${{ gitea.event.inputs.target_version }}-${{ gitea.event.inputs.target_platform }} -q -O gitea
+          chmod +x gitea
+      - name: Test
+        env:
+          GITEA_I_AM_BEING_UNSAFE_RUNNING_AS_ROOT: true
+        run: |
+          ./gitea web --port 3000 &
+          sleep 5
+          pytest tests/test_install.py -v
+
+  test-binary-mssql:
+    runs-on: ubuntu-latest
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:${{ gitea.event.inputs.mssql_tag }}
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Standard
+          SA_PASSWORD: MwantsaSecurePassword1
+        ports:
+          - "1433:1433"
+    env:
+      SERVER_HOST: http://localhost:3000
+      DB_TYPE: mssql
+      DB_HOST: mssql:1433
+      DB_USER: sa
+      DB_PASSWD: MwantsaSecurePassword1
+      DB_NAME: testgitea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Download binary
+        run: |
+          wget https://dl.gitea.com/gitea/${{ gitea.event.inputs.target_version }}/gitea-${{ gitea.event.inputs.target_version }}-${{ gitea.event.inputs.target_platform }} -q -O gitea
+          chmod +x gitea
+      - name: Test
+        env:
+          GITEA_I_AM_BEING_UNSAFE_RUNNING_AS_ROOT: true
+        run: |
+          ./gitea web --port 3000 &
+          sleep 5
+          pytest tests/test_install.py -v
+
+  test-docker-sqlite3:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: sqlite3
+      DB_PATH: /data/gitea/gitea.db
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+  
+  test-docker-mysql:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+      mysql:
+        image: bitnami/mysql:${{ gitea.event.inputs.mysql_tag }}
+        env:
+          ALLOW_EMPTY_PASSWORD: true
+          MYSQL_DATABASE: testgitea
+        ports:
+          - "3306:3306"
+        options: >-
+          --mount type=tmpfs,destination=/bitnami/mysql/data
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: mysql
+      DB_HOST: localhost:3306
+      DB_USER: root
+      DB_PASSWD:
+      DB_NAME: testgitea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+  
+  test-docker-pgsql:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+      pgsql:
+        image: postgres:${{ gitea.event.inputs.pgsql_tag }}
+        env:
+          POSTGRES_DB: testgitea
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - "5432:5432"
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: postgres
+      DB_HOST: pgsql:5432
+      DB_USER: postgres
+      DB_PASSWD: postgres
+      DB_NAME: testgitea
+      DB_SCHEMA: gtestschema
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+  
+  test-docker-mssql:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+      mssql:
+        image: mcr.microsoft.com/mssql/server:${{ gitea.event.inputs.mssql_tag }}
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Standard
+          SA_PASSWORD: MwantsaSecurePassword1
+        ports:
+          - "1433:1433"
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: mssql
+      DB_HOST: mssql:1433
+      DB_USER: sa
+      DB_PASSWD: MwantsaSecurePassword1
+      DB_NAME: testgitea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+
+  test-docker-rootless-sqlite3:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: sqlite3
+      DB_PATH: /data/gitea/gitea.db
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+  
+  test-docker-rootless-mysql:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+      mysql:
+        image: bitnami/mysql:${{ gitea.event.inputs.mysql_tag }}
+        env:
+          ALLOW_EMPTY_PASSWORD: true
+          MYSQL_DATABASE: testgitea
+        ports:
+          - "3306:3306"
+        options: >-
+          --mount type=tmpfs,destination=/bitnami/mysql/data
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: mysql
+      DB_HOST: localhost:3306
+      DB_USER: root
+      DB_PASSWD:
+      DB_NAME: testgitea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+  
+  test-docker-rootless-pgsql:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+      pgsql:
+        image: postgres:${{ gitea.event.inputs.pgsql_tag }}
+        env:
+          POSTGRES_DB: testgitea
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - "5432:5432"
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: postgres
+      DB_HOST: pgsql:5432
+      DB_USER: postgres
+      DB_PASSWD: postgres
+      DB_NAME: testgitea
+      DB_SCHEMA: gtestschema
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
+  
+  test-docker-rootless-mssql:
+    runs-on: ubuntu-latest
+    services:
+      gitea:
+        image: gitea/gitea:${{ gitea.event.inputs.target_version }}-rootless
+        env:
+          USER_UID: 1000
+          USER_GID: 1000
+        ports:
+          - "3000:3000"
+      mssql:
+        image: mcr.microsoft.com/mssql/server:${{ gitea.event.inputs.mssql_tag }}
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Standard
+          SA_PASSWORD: MwantsaSecurePassword1
+        ports:
+          - "1433:1433"
+    env:
+      SERVER_HOST: http://gitea:3000
+      DB_TYPE: mssql
+      DB_HOST: mssql:1433
+      DB_USER: sa
+      DB_PASSWD: MwantsaSecurePassword1
+      DB_NAME: testgitea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache-dependency-path: '**/tests/requirements.txt'
+          cache: 'pip'
+      - name: Install python requirements
+        run: pip install -r tests/requirements.txt
+      - name: Install playwright
+        run: playwright install --with-deps webkit
+      - name: Test
+        run: |
+          pytest tests/test_install.py -v
