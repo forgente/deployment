@@ -5,6 +5,7 @@ on:
     # only viersion.json changed
     paths:
       - version.json
+      - .gitea/workflows/push.yml
 
 jobs:
   update-version:
