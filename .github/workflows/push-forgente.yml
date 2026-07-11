@@ -1,0 +1,27 @@
+name: update forgente deployment information
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - version.json
+      - .github/workflows/push-forgente.yml
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: configure aws
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ secrets.AWS_REGION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: upload forgente version.json to s3
+      run: |
+        aws s3 cp version.json s3://${{ secrets.AWS_S3_BUCKET }}/forgente/version.json --no-progress
+    - name: verify uploaded forgente version.json
+      run: |
+        curl -s https://dl.forgente.com/forgente/version.json | diff - version.json
