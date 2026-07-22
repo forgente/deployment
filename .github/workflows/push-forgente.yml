@@ -21,7 +21,9 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     - name: upload forgente version.json to s3
       run: |
-        aws s3 cp version.json s3://${{ secrets.AWS_S3_BUCKET }}/forgente/version.json --no-progress
+        # short TTL on this mutable release pointer so a new version goes live at
+        # the CDN edge within minutes without a manual CloudFront invalidation
+        aws s3 cp version.json s3://${{ secrets.AWS_S3_BUCKET }}/forgente/version.json --no-progress --cache-control max-age=300
     - name: verify uploaded forgente version.json
       run: |
         curl -s https://dl.forgente.com/forgente/version.json | diff - version.json
